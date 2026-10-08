@@ -34,8 +34,28 @@ Open `index.html` in a browser (it loads three.js r128 from cdnjs). The whole si
   equaliser, glitch static, strobe tiles); the side screens show a live camera feed from FOH that
   cuts between the members. Moving-head beams, red lasers, flame jets every 30 seconds and a
   confetti drop every 90 seconds. **House** brings the arena lights up and empties the stage.
+- **Music**: the BABYMONSTER '춤 (CHOOM)' music video plays from YouTube in a small "Now playing"
+  card (see below).
 - **Countdown**: D-day and a live countdown to showtime under the title.
 - **Visitor counter**: "N visitors so far · M today" under the title (see below).
+
+## Music
+
+When the page opens, the CHOOM music video starts in a card under the title (under the control
+strip on phones). Browsers only let a page autoplay muted video, so it starts muted and the sound
+comes on with the visitor's first tap, drag or key press anywhere on the page; **Tap for sound** /
+**Mute** toggles it. **✕** stops the music and hides the video, leaving a **Play CHOOM** button, and
+the page remembers that choice on the next visit. If YouTube can't be reached or the video can't
+be embedded, the button becomes a link to the video on YouTube.
+
+- **Change the video:** set `VIDEO` (the YouTube ID, the part after `watch?v=`) near the end of
+  `index.html`. It is `x3eqqoZPV_E`, the ID BABYMONSTER's channel post links for the
+  '춤 (CHOOM)' M/V.
+- **Why the video stays visible:** YouTube's embed rules require a visible player of at least
+  200 × 200 px and don't allow hidden, audio-only playback, so the card shows the video while the
+  music plays. It uses the privacy-enhanced `youtube-nocookie.com` player.
+- **iPhone and iPad:** if Safari keeps the sound off after the first tap, tap **Tap for sound** or
+  the unmute button on the video itself.
 
 ## Data
 

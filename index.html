@@ -11,6 +11,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M9 5l15 17-9 5zM55 5L40 22l9 5z' fill='%23ff2a36'/%3E%3Ccircle cx='32' cy='38' r='22' fill='%23ff2a36'/%3E%3Cpath d='M20 34h24v9H20z' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.youtube-nocookie.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: full-bleed 3D arena; brand top-left, control dock bottom-left, seat panel on the right
@@ -159,7 +160,25 @@ input[type=range]{width:100%;min-width:0;accent-color:var(--red)}
   .verdict{font-size:12.5px;margin-top:8px}
   .stats>div,.block{padding-left:16px;padding-right:16px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.music{position:fixed;left:16px;top:236px;z-index:4;width:356px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.music-bar{display:flex;align-items:center;gap:8px;padding:5px 5px 5px 10px}
+.music-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:500 11px/1.2 var(--f-data);letter-spacing:.04em;color:#d2c9ce}
+.music-title b{font-weight:500;color:var(--ink)}
+.music-btn{appearance:none;flex:none;border:1px solid var(--line-strong);background:transparent;border-radius:2px;padding:6px 9px;font:600 11.5px/1 var(--f-body);color:var(--ink);cursor:pointer;white-space:nowrap}
+.music-btn:hover{background:rgba(255,255,255,.07)}
+.music-btn.hot{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+.music-frame{position:relative;height:200px;background:#000}
+.music-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.eq{display:inline-flex;align-items:flex-end;gap:2px;width:10px;height:10px;flex:none}
+.eq i{width:2px;height:10px;background:var(--red);transform-origin:bottom;animation:eq .8s ease-in-out infinite alternate}
+.eq i:nth-child(2){animation-delay:-.27s}
+.eq i:nth-child(3){animation-delay:-.53s}
+@keyframes eq{from{transform:scaleY(.2)}to{transform:scaleY(1)}}
+.music.quiet .eq i{animation:none;transform:scaleY(.2)}
+.music-pill{position:fixed;left:16px;top:236px;z-index:4;display:inline-flex;align-items:center;gap:7px;padding:7px 11px;background:var(--panel);border:1px solid var(--line);border-radius:3px;font:600 12px/1 var(--f-body);color:#d8cfd4;text-decoration:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.music-pill:hover{background:rgba(40,30,36,.92)}
+.music-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.eq i{animation:none}}
 </style>
 </head>
 <body>
@@ -283,10 +302,21 @@ input[type=range]{width:100%;min-width:0;accent-color:var(--red)}
           <li>Wheelchair-accessible seats have a fixed capacity; contact the promoter to reserve one.</li>
         </ul>
       </section>
-      <p class="fine">Fan-made and unofficial; not affiliated with YG Entertainment, TEM Presents, Live Nation or Indonesia Arena. Categories, prices and where each category sits follow the official seat map. The arena shell, row counts, section numbers and stage sizes are estimates, so confirm your seat on your ticket and the official map. The figures on stage are generic stand-ins, not likenesses. Showtime is from ticket listings; check the official channels for open-gate times.</p>
+      <p class="fine">Fan-made and unofficial; not affiliated with YG Entertainment, TEM Presents, Live Nation or Indonesia Arena. Categories, prices and where each category sits follow the official seat map. The arena shell, row counts, section numbers and stage sizes are estimates, so confirm your seat on your ticket and the official map. The figures on stage are generic stand-ins, not likenesses. Showtime is from ticket listings; check the official channels for open-gate times. The music video plays from YouTube.</p>
     </div>
   </div>
 </aside>
+
+<section class="music quiet" id="music" aria-label="Now playing" hidden>
+  <div class="music-bar">
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="music-title"><b>BABYMONSTER</b> · 춤 (CHOOM)</span>
+    <button type="button" class="music-btn hot" id="musicSound">Tap for sound</button>
+    <button type="button" class="music-btn" id="musicStop" aria-label="Stop the music and hide the video">✕</button>
+  </div>
+  <div class="music-frame"><div id="ytPlayer"></div></div>
+</section>
+<a class="music-pill" id="musicPill" href="https://www.youtube.com/watch?v=x3eqqoZPV_E" target="_blank" rel="noopener" hidden>Play CHOOM</a>
 
 <div class="tip" id="tip" hidden></div>
 <div class="fallback" id="fallback" hidden><p>This simulator needs WebGL. Open it in a recent Chrome, Safari, Edge or Firefox.</p></div>
@@ -1831,6 +1861,95 @@ requestAnimationFrame(frame);
       document.getElementById('todayWrap').hidden=false;
     });
   }).catch(function(){});
+})();
+</script>
+<script>
+/* Soundtrack: the CHOOM music video from YouTube. Browsers only autoplay muted video, so it starts
+   muted when the page opens and the sound comes on with the first tap, drag or key press anywhere.
+   YouTube's embed rules ask for a visible player of at least 200 x 200 px (no hidden, audio-only
+   playback), so it sits in a small card; the X stops it and leaves a "Play CHOOM" button, and the
+   choice is remembered. If YouTube can't be reached or refuses the embed, the button links to it. */
+(function(){
+  'use strict';
+  var VIDEO='x3eqqoZPV_E'; // BABYMONSTER - '춤 (CHOOM)' M/V
+  var PREF='bmjkt.music.v1';
+  var card=document.getElementById('music'),pill=document.getElementById('musicPill'),soundBtn=document.getElementById('musicSound'),stopBtn=document.getElementById('musicStop');
+  var brand=document.querySelector('.brand'),dock=document.querySelector('.dock');
+  pill.href='https://www.youtube.com/watch?v='+VIDEO;
+  var player=null,ready=false,wantSound=false,failed=false,apiAsked=false;
+  var pref='on'; try{pref=localStorage.getItem(PREF)||'on';}catch(e){}
+  function setPref(v){pref=v;try{localStorage.setItem(PREF,v);}catch(e){}}
+
+  // under the title on wide screens, under the control strip on phones
+  function place(){
+    var ref=matchMedia('(max-width:760px)').matches?dock:brand,top=Math.round(ref.getBoundingClientRect().bottom+10)+'px';
+    card.style.top=top; pill.style.top=top;
+  }
+  place(); addEventListener('resize',place);
+  if(window.ResizeObserver) new ResizeObserver(place).observe(brand);
+
+  function muted(){return !ready||player.isMuted();}
+  function label(){
+    var m=muted();
+    soundBtn.textContent=m?'Tap for sound':'Mute';
+    soundBtn.classList.toggle('hot',m);
+    card.classList.toggle('quiet',m||!ready||player.getPlayerState()!==1);
+  }
+  function sound(on){
+    if(!ready){wantSound=on;return;}
+    if(on){player.unMute();player.setVolume(85);player.playVideo();} else player.mute();
+    label(); setTimeout(label,500); // some browsers refuse; then the button keeps asking
+  }
+  function fail(){
+    failed=true; card.hidden=true;
+    try{if(player&&player.destroy)player.destroy();}catch(e){}
+    pill.textContent='Watch CHOOM on YouTube'; pill.hidden=false;
+  }
+  function create(){
+    if(player) return;
+    card.hidden=false;
+    var vars={autoplay:1,mute:1,playsinline:1,rel:0,loop:1,playlist:VIDEO};
+    if(location.origin&&location.origin!=='null') vars.origin=location.origin;
+    player=new YT.Player('ytPlayer',{host:'https://www.youtube-nocookie.com',videoId:VIDEO,width:'100%',height:'100%',playerVars:vars,
+      events:{
+        onReady:function(){ready=true;player.mute();player.playVideo();if(wantSound)sound(true);else label();},
+        onStateChange:label,
+        onError:fail
+      }});
+  }
+  function start(){
+    if(window.YT&&window.YT.Player){create();return;}
+    if(apiAsked) return;
+    apiAsked=true;
+    var prev=window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady=function(){if(prev)prev();create();};
+    var s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api'; s.async=true; s.onerror=fail;
+    document.head.appendChild(s);
+    setTimeout(function(){if(!window.YT||!window.YT.Player)fail();},20000);
+  }
+
+  // the first touch anywhere on the page turns the sound on
+  function firstGesture(e){
+    document.removeEventListener('pointerdown',firstGesture,true);
+    document.removeEventListener('keydown',firstGesture,true);
+    if(e.target&&e.target.closest&&e.target.closest('#music,#musicPill')) return;
+    if(pref!=='off'&&!failed) sound(true);
+  }
+  document.addEventListener('pointerdown',firstGesture,true);
+  document.addEventListener('keydown',firstGesture,true);
+
+  soundBtn.addEventListener('click',function(){sound(muted());});
+  stopBtn.addEventListener('click',function(){
+    if(ready) player.pauseVideo();
+    wantSound=false; card.hidden=true; pill.hidden=false; setPref('off');
+  });
+  pill.addEventListener('click',function(e){
+    if(failed) return; // plain link to YouTube
+    e.preventDefault(); setPref('on'); pill.hidden=true; card.hidden=false;
+    if(player) sound(true); else {wantSound=true;start();}
+  });
+
+  if(pref==='off') pill.hidden=false; else start();
 })();
 </script>
 </body>
